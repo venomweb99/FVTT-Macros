@@ -1,28 +1,26 @@
 let shader = new PIXI.Filter(null, `
     uniform vec2 resolution;
+    varying vec2 vTextureCoord;
     uniform sampler2D uSampler;
     uniform float random;
+    uniform float randomw;
+    uniform float randomh;
     uniform float dradius;
     uniform float dgridSize;
     uniform float radius;
     uniform float time;
-    
-    varying vec2 vTextureCoord;
-
+    uniform float alarm;
     void main() {
+        float bloomIntensity = 3.0;
         float gridSize = dgridSize;
-        
-        float bloomIntensity = 2.5 ;
-
         vec2 uv = gl_FragCoord.xy / resolution;
         vec2 gridPosition = floor(uv * resolution / gridSize);
         vec2 gridUV = fract(uv * resolution / gridSize);
-        
-        
-        
-        float radius = dradius + sin(time)*0.5 * mod(gridPosition.x, 3.0) + 0.1 *mod(gridPosition.y, 3.0);
-        
         vec4 color = texture2D(uSampler, vTextureCoord);
+        float luminosity = 0.3 * color.r + 0.59 * color.g + 0.11 * color.b;
+        float radius = dradius * luminosity * (luminosity * 0.5 + 0.5);
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        
         
         // Calculate distance from the center of the grid cell
         float dist = distance(gridUV, vec2(0.5));
@@ -30,8 +28,8 @@ let shader = new PIXI.Filter(null, `
         if (dist > radius / gridSize) {
             color = vec4(0.0, 0.0, 0.0, 1.0);
         } else {
-            float luminosity = 0.3 * color.r + 0.59 * color.g + 0.11 * color.b;
-            color = vec4(luminosity * 1.0, luminosity * luminosity * 0.9, luminosity * luminosity, 1.0);
+            
+            color = vec4(luminosity , luminosity * luminosity * luminosity -0.2, (0.1 + 0.6 * luminosity) * luminosity - 0.1, 1.0);
 
             // Add bloom effect
             color.rgb *= bloomIntensity;
@@ -45,18 +43,32 @@ let shader = new PIXI.Filter(null, `
     }
 `);
 
-shader.uniforms.dgridSize = 8;
-shader.uniforms.dradius = 4.0;
+shader.uniforms.dgridSize = 7;
+shader.uniforms.dradius = 10;
 shader.uniforms.resolution = [canvas.app.renderer.width, canvas.app.renderer.height];
 
 let time = 0;
+let randomn = 1;
+let frameCount = 0;
+let alarm = 1;
+let speed=10;
 
 canvas.app.ticker.add((delta) => {
     time += delta;
     shader.uniforms.time = time / 20; // Adjust this value to control the speed of the wiggle
-     
-    
-    
+    frameCount++;
+    if(frameCount >= speed){
+        randomn = Math.random();
+        frameCount = 0;
+        alarm+= speed/60;
+    }
+    if(alarm>=2){
+        alarm = 1;
+    }
+    shader.uniforms.random = randomn;
+    shader.uniforms.randomw = randomn * canvas.app.renderer.width;
+    shader.uniforms.randomh = randomn * canvas.app.renderer.height;
+    shader.uniforms.alarm = alarm;
 });
 
 canvas.app.stage.filters = [shader];
