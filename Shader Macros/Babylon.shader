@@ -96,6 +96,32 @@ let shader = new PIXI.Filter(null, `
         
         
         
+
+        //Sharpen
+        float sharpenStr = 0.15;
+        vec3 sharpColor = vec3(0.0);
+        //center pixel formula
+        finalColor.rgb *= sharpenStr * 4.0 +1.0;
+        //neighbor formula: neighbor * sharpenStr * -1.0
+        //set the neighbors to the pixels on top, left, right and bottom of the current pixel
+        vec3 neighbors[4];
+        neighbors[0] = texture2D(uSampler, uv + vec2(0.0, px.y)).rgb;
+        neighbors[1] = texture2D(uSampler, uv + vec2(-px.x, 0.0)).rgb;
+        neighbors[2] = texture2D(uSampler, uv + vec2(px.x, 0.0)).rgb;
+        neighbors[3] = texture2D(uSampler, uv + vec2(0.0, -px.y)).rgb;
+        //add the neighbors to the sharpColor
+        for (int i = 0; i < 4; i++) {
+            sharpColor += neighbors[i] * sharpenStr * -1.0;
+        }
+        //add the center pixel to the sharpColor
+        sharpColor += finalColor.rgb;
+        //set the finalColor to the sharpColor
+        finalColor.rgb = sharpColor;
+        
+
+
+        
+        
         vec3 blurColor = vec3(0.0);
         const float blurRadius = 5.0;
         for (float i = -blurRadius; i <= blurRadius; i++) {
@@ -105,9 +131,10 @@ let shader = new PIXI.Filter(null, `
             }
         }
         blurColor /= (2.0 * blurRadius + 1.0) * (2.0 * blurRadius + 1.0);
-        vec3 bloomColor = finalColor.rgb + 0.4 * blurColor;
+        vec3 bloomColor = finalColor.rgb + 0.6 * blurColor;
         gl_FragColor = vec4(bloomColor, 1.0);
     }
+    
     
 `);
 shader.uniforms.uMaskSampler = PIXI.Texture.from('/CustomResources/PaintMask.png');
