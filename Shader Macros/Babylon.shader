@@ -9,7 +9,7 @@ let shader = new PIXI.Filter(null, `
     uniform vec2 mask2Res;
     uniform sampler2D uMask3Sampler;
     uniform vec2 mask3Res;
-    
+   
 
     vec3 blur5(vec2 uv) {
         vec2 px = vec2(1.0 / filterArea.x, 1.0 / filterArea.y);
@@ -29,7 +29,7 @@ let shader = new PIXI.Filter(null, `
         vec2 uv = vTextureCoord;
         vec2 px = vec2(1.0 / filterArea.x, 1.0 / filterArea.y);
         //Sharpen
-        float sharpenStr = 0.155;
+        float sharpenStr = 0.105;
         vec3 sharpColor = vec3(0.0);
         //center pixel formula
         color *= sharpenStr * 4.0 +1.0;
@@ -123,7 +123,7 @@ let shader = new PIXI.Filter(null, `
     }
 
     vec3 kuwahara79(vec2 uv){
-        const float uRadius = 5.9;
+        const float uRadius = 7.9;
         vec2 px = vec2(1.0 / filterArea.x, 1.0 / filterArea.y);
         float aspectRatio = max(filterArea.x / filterArea.y, 1.0);
         //uv2.x *= aspectRatio;
@@ -214,6 +214,138 @@ let shader = new PIXI.Filter(null, `
         return preColor;
     }
 
+    vec3 rgbToHsl(vec3 color) {
+        float maxVal = max(max(color.r, color.g), color.b);
+        float minVal = min(min(color.r, color.g), color.b);
+        float delta = maxVal - minVal;
+        
+        float hue = 0.0;
+        float saturation = 0.0;
+        float lightness = (maxVal + minVal) / 2.0;
+
+        if (delta > 0.0) {
+            saturation = (lightness < 0.5) ? (delta / (maxVal + minVal)) : (delta / (2.0 - maxVal - minVal));
+
+            if (maxVal == color.r) {
+                hue = (color.g - color.b) / delta + ((color.g < color.b) ? 6.0 : 0.0);
+            } else if (maxVal == color.g) {
+                hue = (color.b - color.r) / delta + 2.0;
+            } else {
+                hue = (color.r - color.g) / delta + 4.0;
+            }
+
+            hue /= 6.0;
+        }
+
+        return vec3(hue, saturation, lightness);
+    }
+
+
+    float hueToRgbComponent(float p, float q, float t) {
+            if (t < 0.0) t += 1.0;
+            if (t > 1.0) t -= 1.0;
+
+            if (t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
+            if (t < 1.0 / 2.0) return q;
+            if (t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
+
+            return p;
+    }
+
+    vec3 hslToRgb(vec3 hslColor) {
+        float hue = hslColor.x;
+        float saturation = hslColor.y;
+        float lightness = hslColor.z;
+
+        float q = (lightness < 0.5) ? lightness * (1.0 + saturation) : lightness + saturation - lightness * saturation;
+        float p = 2.0 * lightness - q;
+
+        vec3 rgbColor = vec3(
+            hueToRgbComponent(p, q, hue + 1.0/3.0),
+            hueToRgbComponent(p, q, hue),
+            hueToRgbComponent(p, q, hue - 1.0/3.0)
+        );
+
+        return rgbColor;
+    }
+    vec3 luminanceClamp(vec3 color){
+        //rgb to hsl
+        const int steps = 16;
+        vec3 hsl = rgbToHsl(color);
+        //clamp luminance
+        float step = 1.0/float(steps);
+        float luminance = hsl.z;
+        float luminanceStep = step;
+        for(int i = 0; i < steps; i++){
+            if(luminance < luminanceStep){
+                hsl.z = luminanceStep - step/2.0;
+                break;
+            }
+            luminanceStep += step;
+        }
+        //hsl to rgb
+        color = hslToRgb(hsl);
+
+        return color;
+    }
+    vec3 colorClamp(vec3 color){
+        const int steps = 12;
+        bool enableIntention = true;
+        float step = 1.0/float(steps);
+        float colorStep = step;
+        for(int i = 0; i < steps; i++){
+            if (color.r < colorStep) {
+                color.r = colorStep - step/2.0;
+                break;
+            }
+            if
+            (color.g < colorStep) {
+                color.g = colorStep - step/2.0;
+                break;
+            }
+            if
+            (color.b < colorStep) {
+                color.b = colorStep - step/2.0;
+                break;
+            }
+            colorStep += step;
+        }
+        
+        //color intention
+        if(enableIntention){
+            float colordiff1 = color.r - color.g;
+            float colordiff2 = color.r - color.b;
+            float range = step/4.0;
+            if( colordiff1 > range && colordiff2 < range && colordiff2 > -range){
+                color.r += range * 0.229;
+            }else if( colordiff1 < -range && colordiff2 < range && colordiff2 > -range){
+                color.g += range * 0.587;
+            }else if(colordiff2 < -range && colordiff1 < range && colordiff1 > -range){
+                color.b += range * 0.114;
+            }else if(colordiff1 > range && colordiff2 > range){
+                color.r += range * 0.229;
+                color.g += range * 0.587;
+            }else if(colordiff1 > range && colordiff2 < -range){
+                color.r += range * 0.229;
+                color.b += range * 0.114;
+            }else if(colordiff1 < -range && colordiff2 > range){
+                color.g += range * 0.587;
+                color.r += range * 0.229;
+            }else if(colordiff1 < -range && colordiff2 < -range){
+                color.g += range * 0.587;
+                color.b += range * 0.114;
+            }else if(colordiff2 > range && colordiff1 < range && colordiff1 > -range){
+                color.b += range * 0.114;
+                color.g += range * 0.587;
+            }
+        }
+        
+
+
+
+        return color;
+    }
+
     void main(void) {
         vec2 uv = vTextureCoord;
         vec2 px = vec2(1.0 / filterArea.x, 1.0 / filterArea.y);
@@ -230,21 +362,24 @@ let shader = new PIXI.Filter(null, `
         vec4 finalColor = texture2D(uSampler, vTextureCoord);
         vec3 colort1, colort2;
 
-        colort1 = kuwahara39(uv);
-        colort2 = darken(kuwahara79(uv), 0.17);
-        finalColor.rgb = mix(colort1, colort2, distance*distance);
-
-        colort1 = applyPaintHighlight(finalColor.rgb, maskColor2, 1.0, 0);
-        colort2 = applyPaintHighlight(finalColor.rgb, maskColor2, 2.0, 1);
-        finalColor.rgb = mix(colort1, colort2, distance);
-
+        //colort1 = kuwahara39(uv);
+        colort2 = kuwahara79(uv);
+        finalColor.rgb = colorClamp(luminanceClamp(finalColor.rgb));
+        finalColor.rgb = mix(finalColor.rgb, vignette(finalColor.rgb), 0.5);
+        //colort1 = applyPaintHighlight(finalColor.rgb, maskColor2, 1.0, 0);
+        //colort2 = applyPaintHighlight(finalColor.rgb, maskColor2, 2.0, 1);
+        //finalColor.rgb = mix(colort1, colort2, distance);
+        
+        finalColor.rgb = mix(finalColor.rgb, colort2, distance + 0.5 * (1.0 - luminance));
         finalColor.rgb = sharpen01(finalColor.rgb);
+        
         finalColor = finalColor * maskColor;
-        finalColor.rgb = finalColor.rgb + 0.7 * vec3(blur5(uv));
-        finalColor.rgb = mix(finalColor.rgb, maskColor3.rgb, maskColor3.r);
-
-        //vignette
-        //finalColor.rgb = vignette(finalColor.rgb);
+        
+        finalColor.rgb = finalColor.rgb + 0.2 * vec3(blur5(uv));
+        finalColor.rgb = mix(finalColor.rgb, maskColor3.rgb, 0.9 * maskColor3.r);
+        finalColor.rgb = mix(finalColor.rgb, maskColor3.rgb, (0.2 - maskColor3.r) * (1.0 - luminance));
+        //the mask shows as it gets darker
+        //finalColor.rgb = mix(finalColor.rgb, maskColor3.rgb, maskColor3.rgb);
         gl_FragColor = vec4(finalColor.rgb, 1.0);
     }
 `);
@@ -255,9 +390,10 @@ shader.uniforms.mask2Res = [1920,1080];
 shader.uniforms.uMask3Sampler = PIXI.Texture.from('/CustomResources/brushpaint1.png');
 shader.uniforms.mask3Res = [1920,1080];
 let time = 0, index = 0;
+
 canvas.app.ticker.add((delta) => {
     time += delta;
-    if(time>20){
+    if(time>17){
         time = 0;
         index++;
         if(index%4==0)
