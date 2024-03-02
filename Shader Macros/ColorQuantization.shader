@@ -214,7 +214,7 @@ let shader = new PIXI.Filter(null, `
         vec2 uv = vTextureCoord;
         vec4 color = texture2D(uSampler, uv);
         //gl_FragColor = vec4(colorClamp(color.rgb), color.a);
-        gl_FragColor = vec4(quantize8(luminanceClamp(pixelArt(0.005))), color.a);
+        gl_FragColor = vec4(quantize8(luminanceClamp(pixelArt(0.0025))), color.a);
     }
 `);
 
