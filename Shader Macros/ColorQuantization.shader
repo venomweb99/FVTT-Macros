@@ -119,26 +119,7 @@ let shader = new PIXI.Filter(null, `
         return rgbColor;
     }
 
-    vec3 luminanceClamp(vec3 color){
-        //rgb to hsl
-        const int steps = 16;
-        vec3 hsl = rgbToHsl(color);
-        //clamp luminance
-        float step = 1.0/float(steps);
-        float luminance = hsl.z;
-        float luminanceStep = step;
-        for(int i = 0; i < steps; i++){
-            if(luminance < luminanceStep){
-                hsl.z = luminanceStep - step/2.0;
-                break;
-            }
-            luminanceStep += step;
-        }
-        //hsl to rgb
-        color = hslToRgb(hsl);
-
-        return color;
-    }
+    
 
     vec3 colorClamp(vec3 color){
         const int steps = 12;
@@ -207,14 +188,75 @@ let shader = new PIXI.Filter(null, `
 
         return texture2D(uSampler, uv).rgb;
     }
-    
+    vec3 luminanceClamp(vec3 color){
+        //rgb to hsl
+        const int steps = 32;
+        vec3 hsl = rgbToHsl(color);
+        //clamp luminance
+        float step = 1.0/float(steps);
+        float luminance = hsl.z;
+        float luminanceStep = step;
+        for(int i = 0; i < steps; i++){
+            if(luminance < luminanceStep){
+                hsl.z = luminanceStep - step/2.0;
+                break;
+            }
+            luminanceStep += step;
+        }
+        //hsl to rgb
+        color = hslToRgb(hsl);
+
+        return color;
+    }
+
+    vec3 hueClamp(vec3 color){
+        //rgb to hsl
+        const int steps = 12;
+        vec3 hsl = rgbToHsl(color);
+        //clamp luminance
+        float step = 1.0/float(steps);
+        float hue = hsl.x;
+        float hueStep = step;
+        for(int i = 0; i < steps; i++){
+            if(hue < hueStep){
+                hsl.x = hueStep - step/2.0;
+                break;
+            }
+            hueStep += step;
+        }
+        //hsl to rgb
+        color = hslToRgb(hsl);
+
+        return color;
+    }
+
+    vec3 saturationClamp(vec3 color){
+        //rgb to hsl
+        const int steps = 16;
+        vec3 hsl = rgbToHsl(color);
+        //clamp luminance
+        float step = 1.0/float(steps);
+        float saturation = hsl.y;
+        float saturationStep = step;
+        for(int i = 0; i < steps; i++){
+            if(saturation < saturationStep){
+                hsl.y = saturationStep - step/2.0;
+                break;
+            }
+            saturationStep += step;
+        }
+        //hsl to rgb
+        color = hslToRgb(hsl);
+
+        return color;
+    }
 
     void main(void)
     {
         vec2 uv = vTextureCoord;
         vec4 color = texture2D(uSampler, uv);
         //gl_FragColor = vec4(colorClamp(color.rgb), color.a);
-        gl_FragColor = vec4(quantize8(luminanceClamp(pixelArt(0.0025))), color.a);
+        gl_FragColor = vec4(saturationClamp(hueClamp(luminanceClamp(pixelArt(0.00025)))), color.a);
     }
 `);
 
