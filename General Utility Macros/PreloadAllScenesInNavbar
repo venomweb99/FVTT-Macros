@@ -1,4 +1,5 @@
 let sceneIndex = 0;
+try{
 for (let scene of game.scenes) {
     try {
         if(scene.navigation == true){
@@ -10,4 +11,7 @@ for (let scene of game.scenes) {
         continue; // Skip to the next iteration of the loop
     }
     sceneIndex++;
+}
+}catch(error){
+    ui.notifications.info(game.user.name + " finished loading");
 }
