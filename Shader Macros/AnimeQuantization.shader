@@ -6,6 +6,21 @@ let shader = new PIXI.Filter(null, `
     uniform vec2 resolution;
     uniform float color11, color12, color21, color22, color31, color32, color41, color42, color51, color52, color61, color62, color71, color72, color81, color82;
 
+    const colors[] = {vec3(0.95, 0.45, 0.13), vec3(0.67, 0.12, 0.07), vec3(0.05, 0.1, 0.46)};
+
+    vec3 snapToPalette(vec3 color){
+        float minDist = 1000.0;
+        vec3 closestColor = vec3(0.0, 0.0, 0.0);
+        for(int i = 0; i < 3; i++){
+            float dist = distance(color, colors[i]);
+            if(dist < minDist){
+                minDist = dist;
+                closestColor = colors[i];
+            }
+        }
+        return closestColor;
+    }
+
     vec3 quantize8(vec3 color)
     {
         float luminance, redgreen, blueyellow;
@@ -178,16 +193,6 @@ let shader = new PIXI.Filter(null, `
 
         return color;
     }
-
-    vec3 pixelArt(float pixelsize){
-        vec2 uv = vTextureCoord;
-        vec2 px = vec2(1.0 / resolution.x, 1.0 / resolution.y);
-        float aspectRatio = resolution.x / resolution.y;
-        // Pixelate
-         uv = vec2(floor(uv.x / pixelsize) * pixelsize, floor(uv.y / pixelsize) * pixelsize);
-
-        return texture2D(uSampler, uv).rgb;
-    }
     vec3 luminanceClamp(vec3 color){
         //rgb to hsl
         const int steps = 16;
@@ -256,15 +261,11 @@ let shader = new PIXI.Filter(null, `
         vec2 uv = vTextureCoord;
         vec4 color = texture2D(uSampler, uv);
         //gl_FragColor = vec4(colorClamp(color.rgb), color.a);
-        gl_FragColor = vec4(luminanceClamp(hueClamp(saturationClamp(pixelArt(0.00025)))), color.a);
+        gl_FragColor = vec4(luminanceClamp(hueClamp(saturationClamp(color.rgb))), color.a);
     }
 `);
 
 shader.uniforms.resolution = [canvas.app.renderer.width, canvas.app.renderer.height];
-for(let i = 1; i <= 8; i++){
-    shader.uniforms['color' + i + '1'] = Math.random();
-    shader.uniforms['color' + i + '2'] = Math.random();
-}
 
 
 canvas.app.stage.filters = [shader];
