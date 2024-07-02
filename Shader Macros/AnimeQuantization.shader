@@ -6,8 +6,6 @@ let shader = new PIXI.Filter(null, `
     uniform vec2 resolution;
     uniform float color11, color12, color21, color22, color31, color32, color41, color42, color51, color52, color61, color62, color71, color72, color81, color82;
 
-    const colors[] = {vec3(0.95, 0.45, 0.13), vec3(0.67, 0.12, 0.07), vec3(0.05, 0.1, 0.46)};
-
     vec3 snapToPalette(vec3 color){
         float minDist = 1000.0;
         vec3 closestColor = vec3(0.0, 0.0, 0.0);
