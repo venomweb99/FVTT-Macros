@@ -104,7 +104,7 @@ if (canvas.tokens.controlled.length === 0) {
           let customNumber = Number(kcustomNumber);
           let attribute = Number(attributeb);
           let skill = Number(skillb);
-
+          
           let roll = new Roll(`${dice} + ${attribute} + ${skill} + ${customNumber}`);
           await roll.roll();
           roll.toMessage();
