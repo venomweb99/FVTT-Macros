@@ -82,36 +82,49 @@ shader.uniforms.applyLights = false;
 shader.uniforms.fadeAmt = 0.0;
 let boolTwistedTD = false;
 let doneMoving = false;
+let finished = false;
 let displaceCap = 0.5;
 let time = 0;
 let timerFade = 0;
+if(!finished){
 canvas.app.ticker.add((delta) => {
-    time += delta;
-    shader.uniforms.time = time;
+    if(!finished){
+        time += delta;
+        shader.uniforms.time = time;
 
-    if(!doneMoving){
-        if(shader.uniforms.timedDisplace > displaceCap){
-            boolTwistedTD = true;
-        }
-        if(shader.uniforms.timedDisplace <= 0.0){
-                shader.uniforms.timedDisplace = 0.0;
-                doneMoving = true;
-                shader.uniforms.fadeAmt = 0.2;
-        }else
-        if(shader.uniforms.timedDisplace > 0.0){
-            if(boolTwistedTD){
-                shader.uniforms.timedDisplace -= 0.007;
-            }else{
-                shader.uniforms.timedDisplace += 0.01;
+        if(!doneMoving){
+            if(shader.uniforms.timedDisplace > displaceCap){
+                boolTwistedTD = true;
+            }
+            if(shader.uniforms.timedDisplace <= 0.0){
+                    shader.uniforms.timedDisplace = 0.0;
+                    doneMoving = true;
+                    shader.uniforms.fadeAmt = 0.2;
+            }else
+            if(shader.uniforms.timedDisplace > 0.0){
+                if(boolTwistedTD){
+                    shader.uniforms.timedDisplace -= 0.007;
+                }else{
+                    shader.uniforms.timedDisplace += 0.01;
+                }
+            }
+        }else{
+            shader.uniforms.applyLights = true;
+            timerFade += delta;
+            if(timerFade > 50 && shader.uniforms.fadeAmt < 1.0){
+                shader.uniforms.fadeAmt += 0.01;
+            }
+            if(shader.uniforms.fadeAmt >= 1.0){
+                finished = true;
             }
         }
-    }else{
-        shader.uniforms.applyLights = true;
-        timerFade += delta;
-        if(timerFade > 50 && shader.uniforms.fadeAmt < 1.0){
-            shader.uniforms.fadeAmt += 0.01;
-        }
     }
-});
+});}
 shader.uniforms.filterArea = [canvas.app.renderer.width, canvas.app.renderer.height];
 canvas.app.stage.filters = [shader];
+AudioHelper.play({
+    src: "https://cdn.discordapp.com/attachments/973270427902291980/1317898483969167400/DiscoElisium.mp3?ex=67605c1b&is=675f0a9b&hm=5d1cbe582fd3e98d5650893f03bd2051d55b11dc669bc949a4c6f77b5bb85de7",
+    volume: 0.3,
+    autoplay: true,
+    loop: false
+});
