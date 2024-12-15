@@ -4,9 +4,9 @@ let shader = new PIXI.Filter(null, `
     varying vec2 vTextureCoord;
     uniform sampler2D uSampler;
     uniform vec2 filterArea;
-    //User Definitions
+    //Special Definitions
     uniform float time;
-   
+    //User Definitions
 
     void main(void) {
         vec2 uv = vTextureCoord;
