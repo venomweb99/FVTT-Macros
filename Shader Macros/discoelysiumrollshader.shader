@@ -103,9 +103,9 @@ canvas.app.ticker.add((delta) => {
             }else
             if(shader.uniforms.timedDisplace > 0.0){
                 if(boolTwistedTD){
-                    shader.uniforms.timedDisplace -= 0.007;
+                    shader.uniforms.timedDisplace -= 0.014;
                 }else{
-                    shader.uniforms.timedDisplace += 0.01;
+                    shader.uniforms.timedDisplace += 0.02;
                 }
             }
         }else{
@@ -123,8 +123,8 @@ canvas.app.ticker.add((delta) => {
 shader.uniforms.filterArea = [canvas.app.renderer.width, canvas.app.renderer.height];
 canvas.app.stage.filters = [shader];
 AudioHelper.play({
-    src: "https://cdn.discordapp.com/attachments/973270427902291980/1317898483969167400/DiscoElisium.mp3?ex=67605c1b&is=675f0a9b&hm=5d1cbe582fd3e98d5650893f03bd2051d55b11dc669bc949a4c6f77b5bb85de7",
-    volume: 0.3,
+    src: "https://raw.githubusercontent.com/venomweb99/FVTT-Macros/main/Res/DiscoElisium.mp3",
+    volume: 0.5,
     autoplay: true,
     loop: false
 });
