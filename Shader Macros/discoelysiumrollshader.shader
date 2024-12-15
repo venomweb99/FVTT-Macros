@@ -124,7 +124,7 @@ shader.uniforms.filterArea = [canvas.app.renderer.width, canvas.app.renderer.hei
 canvas.app.stage.filters = [shader];
 AudioHelper.play({
     src: "https://raw.githubusercontent.com/venomweb99/FVTT-Macros/main/Res/DiscoElisium.mp3",
-    volume: 0.5,
+    volume: 0.6,
     autoplay: true,
     loop: false
 });
